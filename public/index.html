@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAW FORGE — Script Host</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --neon:   #00ffe7;
+  --neon2:  #ff003c;
+  --neon3:  #ffe600;
+  --bg:     #060b0f;
+  --panel:  #0a1118;
+  --border: #1a2a35;
+  --dim:    #3a5060;
+  --text:   #b0d8e8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Share Tech Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,231,.015) 2px,rgba(0,255,231,.015) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,231,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.wrapper{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:40px 24px 60px}
+header{text-align:center;margin-bottom:48px;position:relative;padding:20px}
+.logo-tag{font-size:10px;letter-spacing:4px;color:var(--neon2);text-transform:uppercase;margin-bottom:8px;opacity:.8}
+h1{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(2rem,6vw,3.8rem);letter-spacing:.08em;color:#fff;text-shadow:0 0 10px var(--neon),0 0 40px rgba(0,255,231,.3),0 0 80px rgba(0,255,231,.1);line-height:1}
+h1 span{color:var(--neon)}
+.subtitle{margin-top:12px;font-size:11px;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+.cd{position:absolute;width:18px;height:18px;border-color:var(--neon2);border-style:solid;opacity:.5}
+.tl{top:0;left:0;border-width:2px 0 0 2px}.tr{top:0;right:0;border-width:2px 2px 0 0}
+.bl{bottom:0;left:0;border-width:0 0 2px 2px}.br{bottom:0;right:0;border-width:0 2px 2px 0}
+.status-bar{display:flex;align-items:center;gap:10px;padding:8px 16px;margin-bottom:28px;background:rgba(0,255,231,.04);border:1px solid var(--border);font-size:10px;letter-spacing:2px;color:var(--dim)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:2px}
+.tab-btn{flex:1;padding:12px;background:var(--panel);border:1px solid var(--border);border-bottom:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;position:relative;overflow:hidden}
+.tab-btn::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--neon);transform:scaleX(0);transition:transform .2s}
+.tab-btn:hover{color:var(--text);background:#0d1820}
+.tab-btn.active{color:var(--neon);background:#0d1820}
+.tab-btn.active::after{transform:scaleX(1)}
+.panel{background:var(--panel);border:1px solid var(--border);padding:28px;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.4}
+.tab-content{display:none}.tab-content.active{display:block}
+.upload-zone{border:2px dashed var(--border);padding:48px 24px;text-align:center;cursor:pointer;transition:all .25s;position:relative;background:rgba(0,255,231,.02)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--neon);background:rgba(0,255,231,.05);box-shadow:inset 0 0 30px rgba(0,255,231,.05)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:38px;margin-bottom:12px;display:block;opacity:.4}
+.upload-zone p{font-size:13px;color:var(--dim);letter-spacing:1px}
+.upload-zone .hint{font-size:11px;color:var(--dim);margin-top:6px;opacity:.5}
+.file-info{display:none;margin-top:14px;padding:10px 14px;background:rgba(0,255,231,.06);border:1px solid rgba(0,255,231,.2);font-size:12px;color:var(--neon);letter-spacing:1px;align-items:center;gap:10px}
+.file-info.visible{display:flex}
+textarea{width:100%;min-height:200px;background:#050c12;border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;padding:16px;resize:vertical;outline:none;line-height:1.7;transition:border-color .2s}
+textarea:focus{border-color:rgba(0,255,231,.4)}
+textarea::placeholder{color:var(--dim);opacity:.4}
+.input-label{font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.input-label::before{content:'';width:12px;height:1px;background:var(--neon2)}
+
+/* ── ID SELECTOR ── */
+.id-section{margin-top:18px}
+.id-toggle{display:flex;gap:2px;margin-bottom:12px}
+.id-toggle-btn{flex:1;padding:9px 12px;background:#050c12;border:1px solid var(--border);color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.id-toggle-btn:hover{color:var(--text)}
+.id-toggle-btn.active{background:rgba(0,255,231,.07);border-color:var(--neon);color:var(--neon)}
+.id-random-preview{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#050c12;border:1px solid var(--border)}
+.id-random-preview span{font-size:13px;color:var(--neon3);letter-spacing:1px;flex:1}
+.reroll-btn{padding:5px 12px;background:transparent;border:1px solid var(--dim);color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.reroll-btn:hover{border-color:var(--neon3);color:var(--neon3)}
+.id-custom-wrap{display:flex;align-items:stretch}
+.id-prefix{padding:10px 12px;background:rgba(0,255,231,.05);border:1px solid var(--border);border-right:none;color:var(--dim);font-size:12px;white-space:nowrap;letter-spacing:1px;display:flex;align-items:center}
+.id-custom-wrap input{flex:1;background:#050c12;border:1px solid var(--border);color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s;letter-spacing:1px}
+.id-custom-wrap input:focus{border-color:rgba(0,255,231,.5)}
+.id-custom-wrap input::placeholder{color:var(--dim);opacity:.4}
+.id-hint{font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:1px;opacity:.6}
+
+.generate-btn{width:100%;margin-top:20px;padding:16px;background:transparent;border:1px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.generate-btn::before{content:'';position:absolute;inset:0;background:var(--neon);transform:translateX(-100%);transition:transform .25s;z-index:0}
+.generate-btn span{position:relative;z-index:1}
+.generate-btn:hover:not(:disabled){color:var(--bg);box-shadow:0 0 30px rgba(0,255,231,.3)}
+.generate-btn:hover:not(:disabled)::before{transform:translateX(0)}
+.generate-btn:disabled{opacity:.35;cursor:not-allowed}
+.generate-btn.loading span::after{content:' ...';animation:dots 1.2s infinite}
+@keyframes dots{0%{content:' .'}33%{content:' ..'}66%{content:' ...'}100%{content:' .'}}
+
+.output-section{margin-top:28px;display:none}
+.output-section.visible{display:block}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin-bottom:24px}
+.output-block{background:#050c12;border:1px solid var(--border);position:relative;margin-bottom:14px}
+.output-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.output-label{font-size:10px;letter-spacing:3px;color:var(--neon2);text-transform:uppercase}
+.output-code{padding:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--neon);word-break:break-all;line-height:1.7;max-height:100px;overflow-y:auto;white-space:pre-wrap}
+.output-code::-webkit-scrollbar{width:3px}
+.output-code::-webkit-scrollbar-thumb{background:var(--border)}
+.copy-btn{padding:5px 14px;background:transparent;border:1px solid var(--dim);color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.copy-btn:hover{border-color:var(--neon);color:var(--neon)}
+.copy-btn.copied{border-color:var(--neon3);color:var(--neon3)}
+.stats-bar{display:flex;gap:24px;padding:12px 16px;background:rgba(0,255,231,.03);border:1px solid var(--border);flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat-label{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+.stat-value{font-size:14px;color:var(--neon3);font-family:'Orbitron',sans-serif}
+.notif{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--panel);border:1px solid var(--neon);color:var(--neon);font-size:12px;letter-spacing:2px;transform:translateY(80px);opacity:0;transition:all .3s;z-index:10000;box-shadow:0 0 20px rgba(0,255,231,.2)}
+.notif.error{border-color:var(--neon2);color:var(--neon2);box-shadow:0 0 20px rgba(255,0,60,.2)}
+.notif.show{transform:translateY(0);opacity:1}
+footer{text-align:center;margin-top:40px;font-size:10px;letter-spacing:3px;color:var(--dim);opacity:.35;text-transform:uppercase}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rerolling{animation:spin .4s linear}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="cd tl"></div><div class="cd tr"></div>
+    <div class="cd bl"></div><div class="cd br"></div>
+    <div class="logo-tag">// vercel script host</div>
+    <h1>RAW <span>FORGE</span></h1>
+    <p class="subtitle">Upload → Real Raw URL → Executable Loadstring</p>
+  </header>
+
+  <div class="status-bar">
+    <span class="status-dot"></span>
+    <span>ONLINE</span>
+    <span style="margin-left:auto;opacity:.5">api/upload · api/load/[id]</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('file',this)">📁 Subir Archivo</button>
+    <button class="tab-btn" onclick="switchTab('text',this)">⌨️ Pegar Código</button>
+  </div>
+
+  <div class="panel">
+
+    <!-- FILE TAB -->
+    <div class="tab-content active" id="tab-file">
+      <div class="input-label">Archivo de script</div>
+      <div class="upload-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="*/*">
+        <span class="upload-icon">⬆</span>
+        <p>Arrastra tu archivo aquí o haz clic para seleccionar</p>
+        <p class="hint">.lua · .luau · .js · .txt · cualquier script</p>
+      </div>
+      <div class="file-info" id="fileInfo">
+        <span>📄</span>
+        <span id="fileName">—</span>
+        <span style="margin-left:auto;color:var(--dim)" id="fileSize">—</span>
+      </div>
+
+      <div class="id-section">
+        <div class="input-label" style="margin-top:16px">ID de la URL</div>
+        <div class="id-toggle">
+          <button class="id-toggle-btn active" onclick="setIdMode('file','random',this)">🎲 Random</button>
+          <button class="id-toggle-btn" onclick="setIdMode('file','custom',this)">✏️ Custom</button>
+        </div>
+        <div id="file-random-view">
+          <div class="id-random-preview">
+            <span id="file-random-id">loading...</span>
+            <button class="reroll-btn" id="file-reroll-btn" onclick="reroll('file')">⟳ Reroll</button>
+          </div>
+        </div>
+        <div id="file-custom-view" style="display:none">
+          <div class="id-custom-wrap">
+            <span class="id-prefix">/api/load/</span>
+            <input type="text" id="file-custom-id" placeholder="cypher-crxcker" maxlength="48" oninput="sanitizeId(this)">
+          </div>
+          <div class="id-hint">Solo letras, números y guiones · máx 48 chars</div>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="genFileBtn" onclick="uploadCode('file')" disabled>
+        <span>⚡ Subir y Generar RAW URL</span>
+      </button>
+    </div>
+
+    <!-- TEXT TAB -->
+    <div class="tab-content" id="tab-text">
+      <div class="input-label">Código fuente</div>
+      <textarea id="codeInput" placeholder="-- Pega tu script aquí&#10;print('Hello from RAW FORGE')"></textarea>
+
+      <div class="id-section">
+        <div class="input-label" style="margin-top:16px">ID de la URL</div>
+        <div class="id-toggle">
+          <button class="id-toggle-btn active" onclick="setIdMode('text','random',this)">🎲 Random</button>
+          <button class="id-toggle-btn" onclick="setIdMode('text','custom',this)">✏️ Custom</button>
+        </div>
+        <div id="text-random-view">
+          <div class="id-random-preview">
+            <span id="text-random-id">loading...</span>
+            <button class="reroll-btn" id="text-reroll-btn" onclick="reroll('text')">⟳ Reroll</button>
+          </div>
+        </div>
+        <div id="text-custom-view" style="display:none">
+          <div class="id-custom-wrap">
+            <span class="id-prefix">/api/load/</span>
+            <input type="text" id="text-custom-id" placeholder="cypher-crxcker" maxlength="48" oninput="sanitizeId(this)">
+          </div>
+          <div class="id-hint">Solo letras, números y guiones · máx 48 chars</div>
+        </div>
+      </div>
+
+      <button class="generate-btn" onclick="uploadCode('text')">
+        <span>⚡ Subir y Generar RAW URL</span>
+      </button>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-section" id="outputSection">
+      <div class="divider"></div>
+
+      <div class="input-label">Raw URL</div>
+      <div class="output-block">
+        <div class="output-header">
+          <span class="output-label">🔗 Raw URL</span>
+          <button class="copy-btn" onclick="copyField('rawUrl',this)">Copiar</button>
+        </div>
+        <div class="output-code" id="rawUrl">—</div>
+      </div>
+
+      <div class="input-label">Loadstring para executor</div>
+      <div class="output-block">
+        <div class="output-header">
+          <span class="output-label">▶ Loadstring</span>
+          <button class="copy-btn" onclick="copyField('loadstring',this)">Copiar</button>
+        </div>
+        <div class="output-code" id="loadstring">—</div>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat"><div class="stat-label">Tamaño</div><div class="stat-value" id="statSize">—</div></div>
+        <div class="stat"><div class="stat-label">Líneas</div><div class="stat-value" id="statLines">—</div></div>
+        <div class="stat"><div class="stat-label">ID</div><div class="stat-value" id="statId" style="font-size:11px;letter-spacing:1px">—</div></div>
+        <div class="stat"><div class="stat-label">Expira</div><div class="stat-value" id="statExp">—</div></div>
+      </div>
+
+      <button class="generate-btn" style="border-color:var(--neon3);color:var(--neon3);margin-top:2px" onclick="openRaw()">
+        <span>↗ Abrir RAW en nueva pestaña</span>
+      </button>
+    </div>
+
+  </div>
+  <footer>RAW FORGE · Vercel Serverless · Scripts Permanentes ♾</footer>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+  let fileCode = '';
+  let lastRawUrl = '';
+  const idMode = { file: 'random', text: 'random' };
+
+  // ── RANDOM ID ────────────────────────────────────────────────
+  const adj  = ['dark','cyber','ghost','toxic','neon','void','rapid','silent','cold','blaze','iron','hyper','rogue','zero'];
+  const noun = ['forge','cipher','script','node','proxy','pulse','gate','core','link','shell','byte','flux','vault','scan'];
+
+  function genId() {
+    const a = adj[Math.floor(Math.random()*adj.length)];
+    const n = noun[Math.floor(Math.random()*noun.length)];
+    const d = Math.floor(Math.random()*900+100);
+    return `${a}-${n}-${d}`;
+  }
+
+  function reroll(tab) {
+    const btn = document.getElementById(`${tab}-reroll-btn`);
+    btn.classList.add('rerolling');
+    setTimeout(() => btn.classList.remove('rerolling'), 400);
+    document.getElementById(`${tab}-random-id`).textContent = genId();
+  }
+
+  // Init
+  document.getElementById('file-random-id').textContent = genId();
+  document.getElementById('text-random-id').textContent = genId();
+
+  // ── ID MODE ──────────────────────────────────────────────────
+  function setIdMode(tab, mode, btn) {
+    idMode[tab] = mode;
+    btn.closest('.id-toggle').querySelectorAll('.id-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`${tab}-random-view`).style.display = mode === 'random' ? 'block' : 'none';
+    document.getElementById(`${tab}-custom-view`).style.display = mode === 'custom' ? 'block' : 'none';
+  }
+
+  function sanitizeId(input) {
+    input.value = input.value.replace(/[^a-zA-Z0-9\-_]/g,'').toLowerCase();
+  }
+
+  function getScriptId(tab) {
+    return idMode[tab] === 'random'
+      ? document.getElementById(`${tab}-random-id`).textContent.trim()
+      : document.getElementById(`${tab}-custom-id`).value.trim();
+  }
+
+  // ── FILE ─────────────────────────────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => { if(fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+  function handleFile(file) {
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = fmt(file.size);
+    document.getElementById('fileInfo').classList.add('visible');
+    document.getElementById('genFileBtn').disabled = false;
+    const r = new FileReader();
+    r.onload = e => { fileCode = e.target.result; };
+    r.readAsText(file);
+  }
+
+  // ── TAB ──────────────────────────────────────────────────────
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active');
+    btn.classList.add('active');
+    hideOutput();
+  }
+
+  // ── UPLOAD ───────────────────────────────────────────────────
+  async function uploadCode(source) {
+    const code = source === 'file' ? fileCode : document.getElementById('codeInput').value.trim();
+    if (!code) { notif(source==='file'?'⚠ Carga un archivo primero':'⚠ Pega código primero', true); return; }
+
+    const scriptId = getScriptId(source);
+    if (!scriptId) { notif('⚠ Escribe un ID personalizado', true); return; }
+    if (!/^[a-zA-Z0-9_\-]{1,48}$/.test(scriptId)) { notif('⚠ ID inválido — solo letras, números y guiones', true); return; }
+
+    const btn = event.currentTarget;
+    btn.disabled = true; btn.classList.add('loading');
+    hideOutput();
+
+    try {
+      const res  = await fetch('/api/upload', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ code, scriptId })
+      });
+      const data = await res.json();
+      if (!res.ok) { notif('✗ '+(data.error||'Error'), true); return; }
+
+      lastRawUrl = data.rawUrl;
+      document.getElementById('rawUrl').textContent      = data.rawUrl;
+      document.getElementById('loadstring').textContent  = data.loadstring;
+      document.getElementById('statSize').textContent    = fmt(data.size);
+      document.getElementById('statLines').textContent   = data.lines.toLocaleString();
+      document.getElementById('statId').textContent      = data.id;
+      document.getElementById('statExp').textContent     = '♾ Nunca';
+      document.getElementById('outputSection').classList.add('visible');
+      document.getElementById('outputSection').scrollIntoView({behavior:'smooth',block:'start'});
+      notif('✓ Script hosteado exitosamente');
+      if (idMode[source]==='random') reroll(source);
+
+    } catch(e) {
+      notif('✗ No se pudo conectar con la API', true);
+    } finally {
+      btn.disabled = false; btn.classList.remove('loading');
+    }
+  }
+
+  // ── UTILS ─────────────────────────────────────────────────────
+  function hideOutput() { document.getElementById('outputSection').classList.remove('visible'); }
+  function openRaw()    { if(lastRawUrl) window.open(lastRawUrl,'_blank'); }
+
+  function copyField(id, btn) {
+    const t = document.getElementById(id).textContent;
+    if(t==='—') return;
+    navigator.clipboard.writeText(t).then(()=>{
+      btn.textContent='✓ Copiado'; btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent='Copiar'; btn.classList.remove('copied'); },2000);
+    });
+  }
+
+  function fmt(b) {
+    if(b<1024) return b+' B';
+    if(b<1048576) return (b/1024).toFixed(1)+' KB';
+    return (b/1048576).toFixed(2)+' MB';
+  }
+
+  function notif(msg, err=false) {
+    const n = document.getElementById('notif');
+    n.textContent = msg;
+    n.className = 'notif'+(err?' error':'')+' show';
+    setTimeout(()=>n.classList.remove('show'),3000);
+  }
+</script>
+</body>
+</html>
