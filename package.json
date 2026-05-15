@@ -1,0 +1,12 @@
+{
+  "name": "raw-forge",
+  "version": "1.0.0",
+  "description": "Script to RAW URL converter for Vercel",
+  "private": true,
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
